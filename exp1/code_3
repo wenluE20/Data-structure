@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef int ElemType;
+
+typedef struct {
+    ElemType *elem;    // 空间基地址，空间存放纸牌正反面状态值,正/反分别用1/0表示
+    int length;        // 存放纸牌数
+    int listsize;      // 存放空间的容量
+} SqList;
+
+
+// 初始化顺序表
+int InitList(SqList *L, int n) 
+{
+    L->elem = (ElemType *)malloc(sizeof(ElemType) * (n + 1));
+    if (!L->elem) return 0;
+    
+    // 初始化所有牌正面朝上，状态为1
+    for (int i = 1; i <= n; i++) 
+    {
+        L->elem[i] = 1;
+    }
+    
+    L->length = n;
+    L->listsize = n;
+    
+    return 1;
+}
+
+
+// 翻转纸牌
+void FlipCards(SqList *L) 
+{
+    // 从2开始，以2为基数翻牌
+    for (int base = 2; base <= L->length; base++) 
+    {
+        // 翻倍数为base的牌
+        for (int j = base; j <= L->length; j += base) 
+        {
+            // 翻转纸牌状态（1变0，0变1）
+            L->elem[j] = 1 - L->elem[j];
+        }
+    }
+}
+
+
+// 输出正面朝上的牌
+void PrintFaceUpCards(SqList *L) 
+{
+    int count = 0;
+    
+    // 遍历所有牌
+    for (int i = 1; i <= L->length; i++) 
+    {
+        // 如果牌是正面朝上
+        if (L->elem[i] == 1) 
+        {
+            printf("%d ", i);
+            count++;
+        }
+    }
+    
+    printf("\n%d", count);
+}
+
+
+// 释放内存
+void DestroyList(SqList *L) 
+{
+    free(L->elem);
+    L->elem = NULL;
+    L->length = 0;
+    L->listsize = 0;
+}
+
+
+int main() 
+{
+    SqList L;
+    int n;
+    
+    // 读取牌的总数
+    scanf("%d", &n);
+    
+    // 初始化顺序表
+    InitList(&L, n);
+    
+    // 翻牌
+    FlipCards(&L);
+    
+    // 输出正面朝上的牌
+    PrintFaceUpCards(&L);
+    
+    // 释放内存
+    DestroyList(&L);
+    
+    return 0;
+}
+
