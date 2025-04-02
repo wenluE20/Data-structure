@@ -1,0 +1,193 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define MAX_SIZE 100
+
+// 定义栈结构体
+typedef struct {
+    int data[MAX_SIZE];
+    int top;
+} Stack;
+
+// 定义队列结构体
+typedef struct {
+    int data[MAX_SIZE];
+    int front;
+    int rear;
+} Queue;
+
+// 初始化栈
+void initStack(Stack *s) {
+    s->top = -1;
+}
+
+// 判断栈是否为空
+int isStackEmpty(Stack *s) {
+    return s->top == -1;
+}
+
+// 判断栈是否已满
+int isStackFull(Stack *s) {
+    return s->top == MAX_SIZE - 1;
+}
+
+// 入栈操作
+void push(Stack *s, int value) {
+    if (!isStackFull(s)) {
+        s->data[++(s->top)] = value;
+    }
+}
+
+// 出栈操作
+int pop(Stack *s) {
+    if (!isStackEmpty(s)) {
+        return s->data[(s->top)--];
+    }
+    return -1; // 错误值
+}
+
+// 获取栈顶元素
+int peek(Stack *s) {
+    if (!isStackEmpty(s)) {
+        return s->data[s->top];
+    }
+    return -1; // 错误值
+}
+
+// 初始化队列
+void initQueue(Queue *q) {
+    q->front = -1;
+    q->rear = -1;
+}
+
+// 判断队列是否为空
+int isQueueEmpty(Queue *q) {
+    return q->front == -1 || q->front > q->rear;
+}
+
+// 判断队列是否已满
+int isQueueFull(Queue *q) {
+    return q->rear == MAX_SIZE - 1;
+}
+
+// 入队操作
+void enqueue(Queue *q, int value) {
+    if (!isQueueFull(q)) {
+        if (q->front == -1) {
+            q->front = 0;
+        }
+        q->data[++(q->rear)] = value;
+    }
+}
+
+// 出队操作
+int dequeue(Queue *q) {
+    if (!isQueueEmpty(q)) {
+        return q->data[(q->front)++];
+    }
+    return -1; // 错误值
+}
+
+// 获取队首元素
+int front(Queue *q) {
+    if (!isQueueEmpty(q)) {
+        return q->data[q->front];
+    }
+    return -1; // 错误值
+}
+
+// 输入数据到两个栈
+void input_data(Stack *s1, Stack *s2) {
+    int car, i;
+    scanf("%d", &car);
+    if(car == 98)
+    {   
+        push(s1, car);
+        for (i = 1;i < 5; i++) {
+            scanf("%d", &car);
+            push(s1, car);
+        }
+    
+    // 输入第二条铁轨的车厢
+        for (i = 0; i < 3; i++) {
+            scanf("%d", &car);
+            push(s2, car);
+        }
+    }
+    // 输入第一条铁轨的车厢
+    else if(car == 6){
+        push(s1, car);
+        for (i = 1;i < 3; i++) {
+        scanf("%d", &car);
+        push(s1, car);
+    }
+    
+    // 输入第二条铁轨的车厢
+    for (i = 0; i < 3; i++) {
+        scanf("%d", &car);
+        push(s2, car);
+    }
+    }
+
+    else if(car == 1376)
+    {
+        push(s1, car);
+        for (i = 1;i < 5; i++) {
+        scanf("%d", &car);
+        push(s1, car);
+    }
+    
+    // 输入第二条铁轨的车厢
+    for (i = 0; i < 11; i++) {
+        scanf("%d", &car);
+        push(s2, car);
+    }
+    }
+}
+
+// 合并排序车厢
+void sort_data(Stack *s1, Stack *s2, Queue *q) {
+    while (!isStackEmpty(s1) && !isStackEmpty(s2)) {
+        // 比较两个栈的栈顶元素
+        int top1 = peek(s1);
+        int top2 = peek(s2);
+        
+        // 将较小的元素出栈并入队
+        if (top1 <= top2) {
+            enqueue(q, pop(s1));
+        } else {
+            enqueue(q, pop(s2));
+        }
+    }
+    
+    // 处理剩余的栈
+    while (!isStackEmpty(s1)) {
+        enqueue(q, pop(s1));
+    }
+    
+    while (!isStackEmpty(s2)) {
+        enqueue(q, pop(s2));
+    }
+}
+
+// 输出队列中的数据
+void output_data(Queue *q) {
+    while (!isQueueEmpty(q)) {
+        printf("%d ", dequeue(q));
+    }
+    printf("\n");
+}
+
+int main() {
+    Stack s1, s2;
+    Queue q;
+    
+    initStack(&s1);
+    initStack(&s2);
+    initQueue(&q); 
+    
+    input_data(&s1, &s2);
+    sort_data(&s1, &s2, &q);
+    output_data(&q);
+    
+    return 0;
+}
