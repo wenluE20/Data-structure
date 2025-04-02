@@ -1,0 +1,200 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 定义图书信息结构体
+typedef struct {
+    char bookId[20]; // 书号
+    char title[100]; // 书名
+    char author[50]; // 作者
+    int stock;       // 库存数量
+} Book;
+
+// 定义链表节点结构体
+typedef struct Node {
+    Book book;
+    struct Node *next;
+} Node;
+
+// 创建新节点
+Node* CreateNode(Book book) {
+    //为新节点分配内存
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    if(newNode == NULL)
+    {
+        printf("分配内存失败！\n");
+        return NULL;// TODO
+    }
+
+    //复制图书馆信息到新节点
+    strcpy(newNode->book.bookId,book.bookId);
+    strcpy(newNode->book.title,book.title);
+    strcpy(newNode->book.author,book.author);
+    newNode->book.stock = book.stock;
+
+    //初始化next指针
+    newNode->next = NULL;
+
+    return newNode;
+}
+
+// 在链表尾部插入图书信息
+void InsertBook(Node **head, Book book) {
+    //创建新节点
+    Node* newNode = CreateNode(book);
+
+    //如果链表为空将新节点设为头节点
+    if(*head == NULL)
+    {
+        *head = newNode;
+        return;
+    }
+
+    //找到链表末尾
+    Node* current = *head;
+    while (current->next != NULL)
+    {
+        current = current->next;
+    }
+
+    //将新节点连接到末尾
+    current->next = newNode;
+    // TODO
+}
+
+
+// 根据书号删除图书信息
+int DeleteBook(Node **head, char bookId[]) {
+    //如果链表为空，删除失败
+    if (*head == NULL) 
+    {
+        return 0;
+    }
+
+    // 特殊情况：删除头节点
+    if (strcmp((*head)->book.bookId, bookId) == 0) 
+    {
+        Node* temp = *head;
+        *head = (*head)->next;
+        free(temp);
+        return 1;
+    }
+    
+    // 遍历链表查找并删除节点
+    Node* current = *head;
+    while (current->next != NULL) 
+    {
+        if (strcmp(current->next->book.bookId, bookId) == 0) 
+        {
+            Node* temp = current->next;
+            current->next = temp->next;
+            printf("图书%s删除成功！\n", bookId);
+            free(temp);
+            return 1;
+        }
+        current = current->next;
+    }
+    
+    return 0;// TODO
+}
+
+
+// 根据书号修改图书库存数量
+int UpdateStock(Node *head, char bookId[], int newStock) {
+    // 遍历链表查找图书
+    Node* current = head;
+    while (current != NULL) 
+    {
+        if (strcmp(current->book.bookId, bookId) == 0) 
+        {
+            current->book.stock = newStock;
+            printf("图书%s的库存数量已修改为%d！\n", bookId, newStock);
+            return 1;
+        }
+        current = current->next;
+    }
+    
+    return 0;// TODO
+}
+
+
+// 根据书号查找图书信息
+Node* FindBook(Node *head, char bookId[]) {
+    // 遍历链表查找图书
+    Node* current = head;
+    while (current != NULL) {
+        if (strcmp(current->book.bookId, bookId) == 0) {
+            printf("查找的图书信息：\n");
+            printf("书号：%s,书名：%s,作者：%s,库存：%d\n", 
+                   current->book.bookId, 
+                   current->book.title, 
+                   current->book.author, 
+                   current->book.stock);
+            return current;
+        }
+        current = current->next;
+    }
+    
+    return NULL;// TODO
+}
+
+
+// 遍历并输出所有图书信息
+void TraverseList(Node *head) {
+    // 如果链表为空
+    if (head == NULL) 
+    {
+        printf("图书列表为空！\n");
+        return;
+    }
+    
+    // 输出图书列表标题
+    printf("图书列表：\n");
+    
+    // 遍历并输出每本图书信息
+    Node* current = head;
+    while (current != NULL) 
+    {
+        printf("书号：%s,书名：%s,作者：%s,库存：%d\n", 
+               current->book.bookId, 
+               current->book.title, 
+               current->book.author, 
+               current->book.stock);
+        current = current->next;
+    }// TODO
+}
+
+
+// 主函数
+int main() {
+    Node *head = NULL; // 链表头节点
+    char bookId_find[4], bookId_update[4], bookId_delete[4];
+    int num;
+    scanf("%s", bookId_find);
+    scanf("%s", bookId_update);
+    scanf("%d", &num);
+    scanf("%s", bookId_delete);
+
+    // 添加图书信息
+    Book book1 = {"001", "C程序设计", "谭浩强", 10};
+    Book book2 = {"002", "数据结构", "严蔚敏", 5};
+    Book book3 = {"003", "算法导论", "Thomas H. Cormen", 3};
+    InsertBook(&head, book1);
+    InsertBook(&head, book2);
+    InsertBook(&head, book3);
+
+    // 查找图书信息
+    FindBook(head, bookId_find);
+
+    // 修改图书库存数量
+    UpdateStock(head, bookId_update, num);
+
+    // 删除图书信息
+    DeleteBook(&head, bookId_delete);
+
+    // 遍历输出图书列表
+    TraverseList(head);
+
+    return 0;
+}
+
