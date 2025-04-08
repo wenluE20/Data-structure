@@ -1,0 +1,133 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+ };
+
+
+/******************* 染色 *******************/
+// 辅助函数：中序遍历获取所有节点
+void inorderTraversal(struct TreeNode* root, struct TreeNode** nodes, int* count) {
+    if (root == NULL) return;
+    
+    inorderTraversal(root->left, nodes, count);
+    nodes[(*count)++] = root;
+    inorderTraversal(root->right, nodes, count);
+}
+
+// 辅助函数：统计节点数量
+int countNodes(struct TreeNode* root) {
+    if (root == NULL) return 0;
+    return 1 + countNodes(root->left) + countNodes(root->right);
+}
+
+void getNumber(struct TreeNode* root, int** ops, int opsSize) {
+    if (root == NULL) return;
+    
+    // 计算节点总数
+    int totalNodes = countNodes(root);
+    
+    // 使用数组存储所有节点的引用（按节点值排序）
+    struct TreeNode** nodes = (struct TreeNode**)malloc(totalNodes * sizeof(struct TreeNode*));
+    int nodeCount = 0;
+    inorderTraversal(root, nodes, &nodeCount);
+    
+    // 创建颜色数组，初始所有节点为蓝色(0)，红色为1
+    int* colors = (int*)calloc(totalNodes, sizeof(int));
+    
+    // 应用所有操作
+    for (int i = 0; i < opsSize; i++) {
+        int type = ops[i][0];
+        int x = ops[i][1];
+        int y = ops[i][2];
+        
+        // 为范围[x, y]内的节点染色
+        for (int j = 0; j < totalNodes; j++) {
+            if (nodes[j]->val >= x && nodes[j]->val <= y) {
+                colors[j] = type; // 0为蓝色，1为红色
+            }
+        }
+    }
+    
+    // 统计红色节点数量
+    int redCount = 0;
+    for (int i = 0; i < totalNodes; i++) {
+        if (colors[i] == 1) {
+            redCount++;
+        }
+    }
+    
+    // 输出结果
+    printf("%d\n", redCount);
+    
+    // 释放内存
+    free(nodes);
+    free(colors);
+}
+/*****************************************************/
+
+struct TreeNode* newTreeNode(int val) {
+    struct TreeNode* node = (struct TreeNode*)malloc(sizeof(struct TreeNode));
+    node->val = val;
+    node->left = node->right = NULL;
+    return node;
+}
+
+struct TreeNode* constructTree(int size) {
+    if (size == 0)
+        return NULL;
+
+    struct TreeNode** nodes = (struct TreeNode**)malloc(size * sizeof(struct TreeNode*));
+    for (int i = 0; i < size; i++) {
+        int val;
+        scanf("%d", &val);
+        if (val == -1) {
+            nodes[i] = NULL;
+        } else {
+            nodes[i] = newTreeNode(val);
+        }
+    }
+
+    for (int i = 0, j = 1; j < size; i++) {
+        if (nodes[i] != NULL) {
+            if (j < size)
+                nodes[i]->left = nodes[j++];
+            if (j < size)
+                nodes[i]->right = nodes[j++];
+        }
+    }
+
+    struct TreeNode* root = nodes[0];
+    free(nodes);
+    return root;
+}
+
+void readOps(int ***ops, int *opsSize) {
+    scanf("%d", opsSize);
+
+    *ops = (int **)malloc(*opsSize * sizeof(int *));
+    while(getchar() != '[') {}
+    for (int i = 0; i < *opsSize; i++) {
+        (*ops)[i] = (int *)malloc(3 * sizeof(int));
+        while(getchar() != '[') {}
+        for (int j = 0; j < 3; j++) {
+            scanf("%d", &((*ops)[i][j]));
+        }
+        while(getchar() != ']') {}
+    }
+}
+/*****************************************************/
+
+int main() {
+    int nodeSize;
+    scanf("%d", &nodeSize);
+    struct TreeNode* root = constructTree(nodeSize);
+    int **ops, opsSize;
+    readOps(&ops, &opsSize);
+    getNumber(root, ops, opsSize);
+
+    return 0;
+}
