@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// 信封结构体
+typedef struct {
+    int width;
+    int height;
+} Envelope;
+
+// 比较函数，用于排序
+int compareEnvelopes(const void* a, const void* b) {
+    Envelope* e1 = (Envelope*)a;
+    Envelope* e2 = (Envelope*)b;
+    
+    // 先按宽度升序排序
+    if (e1->width != e2->width) {
+        return e1->width - e2->width;
+    }
+    // 如果宽度相同，则按高度降序排序（这是关键）
+    return e2->height - e1->height;
+}
+
+// 求解最长递增序列
+int maxEnvelopes(Envelope* envelopes, int n) {
+    if (n <= 0) return 0;
+    
+    // 对信封进行排序
+    qsort(envelopes, n, sizeof(Envelope), compareEnvelopes);
+    
+    // 使用动态规划找出高度的最长递增子序列
+    int* dp = (int*)malloc(n * sizeof(int));
+    int maxLen = 0;
+    
+    for (int i = 0; i < n; i++) {
+        dp[i] = 1;  // 每个信封至少构成长度为1的序列
+        
+        for (int j = 0; j < i; j++) {
+            // 因为已经按宽度排序，只需检查高度
+            if (envelopes[j].width < envelopes[i].width && 
+                envelopes[j].height < envelopes[i].height) {
+                dp[i] = dp[i] > dp[j] + 1 ? dp[i] : dp[j] + 1;
+            }
+        }
+        
+        // 更新最大长度
+        maxLen = maxLen > dp[i] ? maxLen : dp[i];
+    }
+    
+    free(dp);
+    return maxLen;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    
+    Envelope* envelopes = (Envelope*)malloc(n * sizeof(Envelope));
+    for (int i = 0; i < n; i++) {
+        scanf("%d %d", &envelopes[i].width, &envelopes[i].height);
+    }
+    
+    int result = maxEnvelopes(envelopes, n);
+    printf("%d\n", result);
+    
+    free(envelopes);
+    return 0;
+}
