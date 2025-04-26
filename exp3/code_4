@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 字符频率结构体
+typedef struct {
+    char character;
+    int frequency;
+} CharFrequency;
+
+// 比较函数，用于排序
+int compareCharFrequency(const void* a, const void* b) {
+    CharFrequency* cf1 = (CharFrequency*)a;
+    CharFrequency* cf2 = (CharFrequency*)b;
+    
+    // 频率降序排序
+    if (cf1->frequency != cf2->frequency) {
+        return cf2->frequency - cf1->frequency;
+    }
+    // 频率相同时，按ASCII码升序排序
+    return cf1->character - cf2->character;
+}
+
+char* frequencySort(char* s) {
+    int len = strlen(s);
+    if (len <= 1) return s;
+    
+    // 创建频率统计数组
+    CharFrequency freqArray[128] = {0}; // 假设只有ASCII字符
+    
+    // 初始化频率数组
+    for (int i = 0; i < 128; i++) {
+        freqArray[i].character = (char)i;
+        freqArray[i].frequency = 0;
+    }
+    
+    // 统计字符频率
+    for (int i = 0; i < len; i++) {
+        freqArray[(unsigned char)s[i]].frequency++;
+    }
+    
+    // 过滤掉未出现的字符
+    CharFrequency validChars[128];
+    int validCount = 0;
+    for (int i = 0; i < 128; i++) {
+        if (freqArray[i].frequency > 0) {
+            validChars[validCount++] = freqArray[i];
+        }
+    }
+    
+    // 按要求排序
+    qsort(validChars, validCount, sizeof(CharFrequency), compareCharFrequency);
+    
+    // 构建结果字符串
+    char* result = (char*)malloc((len + 1) * sizeof(char));
+    int index = 0;
+    
+    for (int i = 0; i < validCount; i++) {
+        for (int j = 0; j < validChars[i].frequency; j++) {
+            result[index++] = validChars[i].character;
+        }
+    }
+    result[index] = '\0';
+    
+    return result;
+}
+
+int main() {
+    char s[1000];
+    scanf("%s", s);
+    
+    char* result = frequencySort(s);
+    printf("%s\n", result);
+    
+    free(result); // 释放内存
+    
+    return 0;
+}
