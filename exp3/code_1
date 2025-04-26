@@ -1,0 +1,36 @@
+#include <stdio.h>
+
+int main() {
+    int C, n;  // C是总时间，n是草药数目
+    scanf("%d %d", &C, &n);
+    
+    int dp[C + 1];  // dp[i]表示在i时间内能获得的最大价值
+    
+    // 初始化dp数组
+    for (int i = 0; i <= C; i++) {
+        dp[i] = 0;
+    }
+    
+    // 对每种草药进行处理
+    for (int i = 0; i < n; i++) {
+        int time, value;
+        scanf("%d %d", &time, &value);
+        
+        // 对于当前草药，更新dp数组
+        // 注意：我们从time开始遍历，因为只有时间大于等于time时才能采摘这种草药
+        for (int j = time; j <= C; j++) {
+            // 对于每个时间点j，我们可以选择采摘当前草药或不采摘
+            // 如果采摘，则价值为dp[j-time] + value
+            // 如果不采摘，则价值为dp[j]
+            // 我们选择价值更大的选项
+            if (dp[j - time] + value > dp[j]) {
+                dp[j] = dp[j - time] + value;
+            }
+        }
+    }
+    
+    // 输出结果
+    printf("%d\n", dp[C]);
+    
+    return 0;
+}
