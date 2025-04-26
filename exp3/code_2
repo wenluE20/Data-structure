@@ -1,0 +1,126 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// 获取数字映射后的值
+long long getMappedValue(int num, int *mapping) {
+    // 处理0的特殊情况
+    if (num == 0) {
+        return mapping[0];
+    }
+    
+    // 对于正数，计算映射后的值
+    long long result = 0;
+    int temp = num;
+    int digit;
+    
+    // 计算数字的位数
+    int digits = 0;
+    int numCopy = num;
+    while (numCopy > 0) {
+        digits++;
+        numCopy /= 10;
+    }
+    
+    // 存储每一位的映射值
+    int *mappedDigits = (int *)malloc(digits * sizeof(int));
+    int idx = 0;
+    
+    // 从最低位开始获取每一位的映射值
+    while (temp > 0) {
+        digit = temp % 10;
+        mappedDigits[idx++] = mapping[digit];
+        temp /= 10;
+    }
+    
+    // 从高位到低位组合映射后的值
+    for (int i = idx - 1; i >= 0; i--) {
+        result = result * 10 + mappedDigits[i];
+    }
+    
+    free(mappedDigits);
+    return result;
+}
+
+// 用于稳定排序的结构体
+typedef struct {
+    int originalValue;  // 原始值
+    long long mappedValue;  // 映射后的值
+    int originalIndex;  // 原始索引，用于保持稳定性
+} NumData;
+
+// 比较函数，用于排序
+int compare(const void *a, const void *b) {
+    NumData *dataA = (NumData *)a;
+    NumData *dataB = (NumData *)b;
+    
+    // 首先比较映射后的值
+    if (dataA->mappedValue < dataB->mappedValue) {
+        return -1;
+    } else if (dataA->mappedValue > dataB->mappedValue) {
+        return 1;
+    } else {
+        // 如果映射值相同，比较原始索引以保持稳定性
+        return dataA->originalIndex - dataB->originalIndex;
+    }
+}
+
+/******************* 排序 *******************/
+void sortJumbled(int *mapping, int *nums, int numsSize) {
+    int *res_nums = (int *)malloc(numsSize * sizeof(int));
+    
+    // 创建数据结构存储原始值、映射值和原始索引
+    NumData *data = (NumData *)malloc(numsSize * sizeof(NumData));
+    
+    // 初始化数据
+    for (int i = 0; i < numsSize; i++) {
+        data[i].originalValue = nums[i];
+        data[i].mappedValue = getMappedValue(nums[i], mapping);
+        data[i].originalIndex = i;
+    }
+    
+    // 使用快速排序
+    qsort(data, numsSize, sizeof(NumData), compare);
+    
+    // 提取排序后的原始值
+    for (int i = 0; i < numsSize; i++) {
+        res_nums[i] = data[i].originalValue;
+    }
+    
+    // 输出结果（使用框架提供的输出方式）
+    for(int i = 0; i < numsSize; i++)
+        printf("%d ", res_nums[i]);
+    printf("\n");
+    
+    // 释放内存
+    free(data);
+    free(res_nums);
+}
+/*****************************************************/
+
+/******************* 读取数据 *******************/
+void readInput(int **mapping, int **nums, int *numsSize) {
+    scanf("%d", numsSize);
+
+    *mapping = (int *)malloc(10 * sizeof(int));
+    for (int i = 0; i < 10; i++) {
+        scanf("%d", &((*mapping)[i]));
+    }
+
+    *nums = (int *)malloc((*numsSize) * sizeof(int));
+    for (int i = 0; i < *numsSize; i++) {
+        scanf("%d", &((*nums)[i]));
+    }
+}
+/*****************************************************/
+
+int main() {
+    int *mapping, *nums, numsSize;
+    readInput(&mapping, &nums, &numsSize);
+    sortJumbled(mapping, nums, numsSize);
+
+    // 释放内存
+    free(mapping);
+    free(nums);
+    
+    return 0;
+}
