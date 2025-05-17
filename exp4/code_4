@@ -1,0 +1,291 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define MAX_SIZE 100
+
+// 方向数组，按照右(R)、下(D)、左(L)、上(U)的顺序
+int dx[4] = {0, 1, 0, -1};
+int dy[4] = {1, 0, -1, 0};
+char dir[4] = {'R', 'D', 'L', 'U'};
+
+// DFS所需的变量
+bool visited[MAX_SIZE][MAX_SIZE];
+char path[MAX_SIZE * MAX_SIZE];
+int pathLen = 0;
+bool foundKey = false;
+int minPathLen = MAX_SIZE * MAX_SIZE;
+char minPath[MAX_SIZE * MAX_SIZE];
+
+// A*算法所需的节点结构
+typedef struct {
+    int x, y;
+    int g;  // 从起点到当前点的实际距离
+    int h;  // 从当前点到终点的估计距离(曼哈顿距离)
+    int f;  // f = g + h
+    int parent;  // 记录父节点在open/closed数组中的索引
+} Node;
+
+// A*所需的变量
+Node openList[MAX_SIZE * MAX_SIZE];
+Node closedList[MAX_SIZE * MAX_SIZE];
+int openCount = 0;
+int closedCount = 0;
+
+/* 使用DFS算法找到钥匙'$'，输出每次移动的方向以及最后的路径长度 */
+void dfs(char **maze, int width, int height, int x, int y, int steps) {
+    // 如果找到钥匙，记录最短路径
+    if (maze[x][y] == '$') {
+        if (steps < minPathLen) {
+            minPathLen = steps;
+            memcpy(minPath, path, pathLen * sizeof(char));
+            foundKey = true;
+        }
+        return;
+    }
+    
+    // 按照右(R)、下(D)、左(L)、上(U)的顺序探索
+    for (int i = 0; i < 4; i++) {
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+        
+        // 检查是否在迷宫范围内且可通行
+        if (nx >= 0 && nx < width && ny >= 0 && ny < height && 
+            (maze[nx][ny] == '0' || maze[nx][ny] == '$') && 
+            !visited[nx][ny]) {
+            
+            // 标记为已访问
+            visited[nx][ny] = true;
+            
+            // 记录移动方向
+            path[pathLen++] = dir[i];
+            printf("->%c", dir[i]);
+            
+            // 递归探索下一个位置
+            dfs(maze, width, height, nx, ny, steps + 1);
+            
+            // 回溯，取消标记
+            visited[nx][ny] = false;
+            
+            // 回溯时也需要输出方向
+            if (!foundKey) {
+                printf("->%c", dir[(i + 2) % 4]);  // 反方向
+                path[pathLen++] = dir[(i + 2) % 4];
+            }
+            
+            if (foundKey) {
+                return;
+            }
+        }
+    }
+}
+
+void findKey(char **maze, int width, int height, int startX, int startY) {
+    // 初始化访问标记数组
+    memset(visited, false, sizeof(visited));
+    pathLen = 0;
+    foundKey = false;
+    minPathLen = MAX_SIZE * MAX_SIZE;
+    
+    // 标记起始位置为已访问
+    visited[startX][startY] = true;
+    
+    // 开始DFS搜索
+    dfs(maze, width, height, startX, startY, 0);
+    
+    // 输出到钥匙的最短路径步数
+    printf("\n%d\n", minPathLen);
+}
+
+/* 返回两点之间的曼哈顿距离 */
+int manhattan(int x1, int y1, int x2, int y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
+// 在openList中找到f值最小的节点
+int findMinF() {
+    int minIndex = 0;
+    int minF = openList[0].f;
+    
+    for (int i = 1; i < openCount; i++) {
+        // 如果f值更小，或f值相同但x更大，或f值和x都相同但y更大
+        if (openList[i].f < minF || 
+            (openList[i].f == minF && openList[i].x > openList[minIndex].x) ||
+            (openList[i].f == minF && openList[i].x == openList[minIndex].x && openList[i].y > openList[minIndex].y)) {
+            minF = openList[i].f;
+            minIndex = i;
+        }
+    }
+    
+    return minIndex;
+}
+
+// 检查节点是否在openList中
+int inOpenList(int x, int y) {
+    for (int i = 0; i < openCount; i++) {
+        if (openList[i].x == x && openList[i].y == y) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 检查节点是否在closedList中
+int inClosedList(int x, int y) {
+    for (int i = 0; i < closedCount; i++) {
+        if (closedList[i].x == x && closedList[i].y == y) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* 使用A*算法寻找出口'#'，输出每次扩展的点以及最后的路径 */
+void findDoor(char **maze, int width, int height, int startX, int startY, int endX, int endY) {
+    // 初始化A*算法所需的变量
+    openCount = 0;
+    closedCount = 0;
+    
+    // 将起点加入openList
+    openList[openCount].x = startX;
+    openList[openCount].y = startY;
+    openList[openCount].g = 0;
+    openList[openCount].h = manhattan(startX, startY, endX, endY);
+    openList[openCount].f = openList[openCount].g + openList[openCount].h;
+    openList[openCount].parent = -1;
+    openCount++;
+    
+    bool found = false;
+    
+    while (openCount > 0 && !found) {
+        // 找到f值最小的节点
+        int current = findMinF();
+        
+        // 输出当前扩展的点
+        printf("->(%d,%d)", openList[current].x, openList[current].y);
+        
+        // 如果找到了终点
+        if (openList[current].x == endX && openList[current].y == endY) {
+            // 将当前节点加入closedList
+            closedList[closedCount++] = openList[current];
+            
+            // 移除openList中的当前节点
+            openList[current] = openList[--openCount];
+            
+            found = true;
+            break;
+        }
+        
+        // 将当前节点加入closedList
+        closedList[closedCount++] = openList[current];
+        
+        // 移除openList中的当前节点
+        openList[current] = openList[--openCount];
+        
+        // 探索四个方向的相邻节点
+        for (int i = 0; i < 4; i++) {
+            int nx = closedList[closedCount - 1].x + dx[i];
+            int ny = closedList[closedCount - 1].y + dy[i];
+            
+            // 检查是否在迷宫范围内且可通行
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height && 
+                (maze[nx][ny] == '0' || maze[nx][ny] == '#')) {
+                
+                // 如果节点已经在closedList中，跳过
+                if (inClosedList(nx, ny) != -1) {
+                    continue;
+                }
+                
+                // 计算从起点到当前点的实际距离
+                int ng = closedList[closedCount - 1].g + 1;
+                
+                // 检查节点是否在openList中
+                int index = inOpenList(nx, ny);
+                
+                if (index == -1) {
+                    // 如果节点不在openList中，加入
+                    openList[openCount].x = nx;
+                    openList[openCount].y = ny;
+                    openList[openCount].g = ng;
+                    openList[openCount].h = manhattan(nx, ny, endX, endY);
+                    openList[openCount].f = openList[openCount].g + openList[openCount].h;
+                    openList[openCount].parent = closedCount - 1;
+                    openCount++;
+                } else {
+                    // 如果节点已在openList中，检查是否找到了更短的路径
+                    if (ng < openList[index].g) {
+                        openList[index].g = ng;
+                        openList[index].f = openList[index].g + openList[index].h;
+                        openList[index].parent = closedCount - 1;
+                    }
+                }
+            }
+        }
+    }
+    
+    // 输出路径
+    printf("\n");
+    
+    if (found) {
+        // 存储最终路径
+        int path[MAX_SIZE * MAX_SIZE][2];
+        int pathCount = 0;
+        
+        // 从终点回溯到起点
+        int current = closedCount - 1;
+        while (current != -1) {
+            path[pathCount][0] = closedList[current].x;
+            path[pathCount][1] = closedList[current].y;
+            pathCount++;
+            current = closedList[current].parent;
+        }
+        
+        // 逆序输出路径
+        for (int i = pathCount - 1; i >= 0; i--) {
+            printf("->(%d,%d)", path[i][0], path[i][1]);
+        }
+    }
+}
+
+int main() {
+    int height, width;
+    scanf("%d %d\n", &height, &width);
+    char **maze = (char **)malloc(height * sizeof(char *));
+    for(int i = 0; i < height; i++) {
+        maze[i] = (char *)malloc(width * sizeof(char));
+        scanf("%s", maze[i]);
+    }
+    
+    int startX = 0, startY = 0;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (maze[i][j] == '*') {
+                startX = i;
+                startY = j;
+            }
+        }
+    }
+    findKey(maze, height, width, startX, startY);
+
+    int endX = 0, endY = 0;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (maze[i][j] == '$') {
+                startX = i;
+                startY = j;
+            }
+            if (maze[i][j] == '#') {
+                endX = i;
+                endY = j;
+            }
+        }
+    }
+    findDoor(maze, height, width, startX, startY, endX, endY);
+    
+    for(int i = 0; i < height; i++) {
+        free(maze[i]);
+    }
+    free(maze);
+    return 0;
+}
